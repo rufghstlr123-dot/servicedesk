@@ -51,7 +51,7 @@
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
         </button>
-        <h2 id="current-month-display">2026년 2월</h2>
+        <h2 id="current-month-display" class="clickable-month">2026년 2월</h2>
         <button id="next-btn" class="nav-btn" aria-label="Next Month">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="9 18 15 12 9 6"></polyline>
@@ -140,6 +140,33 @@
           <button class="shift-option clear-btn" data-shift="">지우기 (Clear)</button>
         </div>
       </div>
+  
+  <!-- Month/Year Picker Modal -->
+  <div id="month-picker-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>날짜 이동</h3>
+        <button id="close-picker-btn" class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="picker-container">
+          <div class="picker-section">
+            <label>연도</label>
+            <div class="picker-grid year-grid" id="picker-year-grid">
+              <!-- Years injected by JS -->
+            </div>
+          </div>
+          <div class="picker-section">
+            <label>월</label>
+            <div class="picker-grid month-grid" id="picker-month-grid">
+              <!-- Months 1-12 -->
+            </div>
+          </div>
+        </div>
+        <button id="apply-picker-btn" class="primary-btn full-width" style="margin-top: 1rem;">이동하기</button>
+      </div>
+    </div>
+  </div>
     </div>
   </div>
 

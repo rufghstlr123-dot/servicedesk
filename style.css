@@ -196,6 +196,18 @@ body {
   text-align: center;
 }
 
+.clickable-month {
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.clickable-month:hover {
+  background: var(--pr-light);
+  color: var(--pr-color);
+}
+
 
 .nav-btn {
   background: white;
@@ -803,6 +815,65 @@ body {
 
 .close-btn {
   background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+/* Picker Specific Styles */
+.picker-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.picker-section label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.picker-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.year-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.month-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.picker-item {
+  padding: 0.6rem;
+  border: 1.5px solid var(--border-color);
+  background: white;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.picker-item:hover {
+  border-color: var(--pr-color);
+  background: var(--pr-light);
+  color: var(--pr-color);
+}
+
+.picker-item.active {
+  background: var(--pr-color);
+  color: white;
+  border-color: var(--pr-color);
+}
   border: none;
   font-size: 1.5rem;
   color: var(--text-muted);

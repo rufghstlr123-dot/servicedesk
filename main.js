@@ -469,15 +469,7 @@ function renderRoster() {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     rosterGrid.style.gridTemplateColumns = `minmax(120px, auto) repeat(${daysInMonth}, minmax(32px, 1fr))`;
 
-    if (Object.keys(employeesData).length === 0) {
-        const emptyMsg = document.createElement('div');
-        emptyMsg.style.cssText = 'grid-column: 1 / -1; padding: 3rem; text-align: center; color: #94a3b8; font-size: 0.9rem; background: #f8fafc; border-bottom: 2px solid #e2e8f0;';
-        emptyMsg.innerHTML = `
-            <div style="font-weight: 600; margin-bottom: 0.5rem;">현재 월(${getMonthKey().val})에 등록된 데이터가 없습니다.</div>
-            <div>좌측 '직원 관리'에서 직원을 추가하거나 [전월 목록 가져오기] 버튼을 눌러주세요.</div>
-        `;
-        rosterGrid.appendChild(emptyMsg);
-    }
+    // Empty message removed as requested
 
     // 1. Header (일자)
     const cornerCell = document.createElement('div');
@@ -1026,6 +1018,62 @@ function setupEventListeners() {
             }, 1000);
         };
     }
+
+    // --- Month Picker Listeners ---
+    const monthPickerModal = document.getElementById('month-picker-modal');
+    const closePickerBtn = document.getElementById('close-picker-btn');
+    const applyPickerBtn = document.getElementById('apply-picker-btn');
+    const yearGrid = document.getElementById('picker-year-grid');
+    const monthGrid = document.getElementById('picker-month-grid');
+
+    let selectedYear = currentDate.getFullYear();
+    let selectedMonth = currentDate.getMonth();
+
+    currentMonthDisplay.onclick = () => {
+        selectedYear = currentDate.getFullYear();
+        selectedMonth = currentDate.getMonth();
+        renderPickerGrids();
+        monthPickerModal.classList.remove('hidden');
+    };
+
+    closePickerBtn.onclick = () => monthPickerModal.classList.add('hidden');
+    window.addEventListener('click', (e) => {
+        if (e.target === monthPickerModal) monthPickerModal.classList.add('hidden');
+    });
+
+    function renderPickerGrids() {
+        // Years (Current year - 2 to + 2)
+        yearGrid.innerHTML = '';
+        for (let y = currentDate.getFullYear() - 2; y <= currentDate.getFullYear() + 2; y++) {
+            const btn = document.createElement('div');
+            btn.className = `picker-item ${y === selectedYear ? 'active' : ''}`;
+            btn.textContent = `${y}년`;
+            btn.onclick = () => {
+                selectedYear = y;
+                renderPickerGrids();
+            };
+            yearGrid.appendChild(btn);
+        }
+
+        // Months 1-12
+        monthGrid.innerHTML = '';
+        for (let m = 0; m < 12; m++) {
+            const btn = document.createElement('div');
+            btn.className = `picker-item ${m === selectedMonth ? 'active' : ''}`;
+            btn.textContent = `${m + 1}월`;
+            btn.onclick = () => {
+                selectedMonth = m;
+                renderPickerGrids();
+            };
+            monthGrid.appendChild(btn);
+        }
+    }
+
+    applyPickerBtn.onclick = () => {
+        currentDate = new Date(selectedYear, selectedMonth, 1);
+        listenToEmployees();
+        monthPickerModal.classList.add('hidden');
+    };
 }
 
 window.deleteEmployee = deleteEmployee;
