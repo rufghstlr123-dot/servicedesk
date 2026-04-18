@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>월별 근무표 - 서비스데스크 근무표</title>
+
+  <!-- Font Setup -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap"
+    rel="stylesheet">
+
+  <!-- CSS Setup -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <!-- Login Overlay -->
+  <div id="login-container" class="login-overlay">
+    <div class="login-card">
+      <div class="login-header">
+        <h1>서비스데스크 근무표</h1>
+        <p>로그인이 필요합니다</p>
+      </div>
+      <div class="login-form">
+        <div class="form-group">
+          <label for="login-id">아이디</label>
+          <input type="text" id="login-id" placeholder="아이디를 입력하세요">
+        </div>
+        <div class="form-group">
+          <label for="login-pw">비밀번호</label>
+          <input type="password" id="login-pw" placeholder="비밀번호를 입력하세요">
+        </div>
+        <div id="login-error" class="error-msg" style="margin-top: 0.5rem; text-align: center;"></div>
+        <button id="login-btn" class="primary-btn full-width">로그인</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="main-app" class="app-container" style="display: none;">
+    <header class="app-header">
+      <div class="header-left">
+        <h1>서비스데스크 근무표</h1>
+      </div>
+      <div class="month-navigation">
+        <button id="prev-btn" class="nav-btn" aria-label="Previous Month">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <h2 id="current-month-display">2026년 2월</h2>
+        <button id="next-btn" class="nav-btn" aria-label="Next Month">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+
+      <div class="header-right">
+        <span id="user-role-display" style="font-size: 0.9rem; font-weight: 500; color: var(--text-muted);"></span>
+        <button id="logout-btn" class="danger-btn">로그아웃</button>
+      </div>
+    </header>
+
+
+    <div class="main-content">
+      <aside class="employee-sidebar">
+        <div class="sidebar-header">
+          <h3>직원 관리</h3>
+        </div>
+        <div class="sidebar-body">
+          <div class="form-group">
+            <label for="emp-name">이름</label>
+            <input type="text" id="emp-name" placeholder="직원 이름">
+          </div>
+          <div class="form-group">
+            <label for="emp-category">직원 범주</label>
+            <select id="emp-category">
+              <option value="Manager">매니저</option>
+              <option value="Weekday AR">주중 AR</option>
+              <option value="Weekend AR">주말 AR</option>
+            </select>
+          </div>
+          <div class="error-msg" id="emp-error-msg"></div>
+          <button id="save-emp-btn" class="primary-btn full-width">추가하기</button>
+          <button id="copy-prev-emp-btn" class="secondary-btn full-width">전월 직원 목록 가져오기</button>
+        </div>
+
+        <div class="sidebar-header" style="border-top: 1px solid var(--border-color);">
+          <h3>근무 유형</h3>
+        </div>
+        <div class="sidebar-body">
+          <div class="shift-options-sidebar">
+            <button class="bulk-shift-btn" data-shift="A">A</button>
+            <button class="bulk-shift-btn" data-shift="A(연)">A(연)</button>
+            <button class="bulk-shift-btn" data-shift="B">B</button>
+            <button class="bulk-shift-btn" data-shift="연차">연차</button>
+            <button class="bulk-shift-btn" data-shift="대휴">대휴</button>
+            <button class="bulk-shift-btn" data-shift="공휴">공휴</button>
+            <button class="bulk-shift-btn clear-btn" data-shift="">지우기</button>
+          </div>
+        </div>
+
+        <div class="sidebar-header" style="border-top: 1px solid var(--border-color);">
+          <h3>메모장</h3>
+        </div>
+        <div class="sidebar-body">
+          <textarea id="memo-textarea" class="memo-area" placeholder="공지사항이나 메모를 입력하세요..."></textarea>
+          <div id="memo-status" class="memo-status"></div>
+        </div>
+      </aside>
+
+      <main class="roster-wrapper">
+        <div id="roster-grid" class="roster-grid">
+          <!-- Roster headers and rows injected by JS -->
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Shift Selection Modal -->
+  <div id="shift-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-title-display">근무 유형</h3>
+        <button id="close-modal-btn" class="close-btn" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="modal-subtitle-display" class="modal-subtitle"></p>
+        <div class="shift-options">
+          <button class="shift-option" data-shift="A">A</button>
+          <button class="shift-option" data-shift="A(연)">A(연)</button>
+          <button class="shift-option" data-shift="B">B</button>
+          <button class="shift-option" data-shift="연차">연차</button>
+          <button class="shift-option" data-shift="대휴">대휴</button>
+          <button class="shift-option" data-shift="공휴">공휴</button>
+          <button class="shift-option clear-btn" data-shift="">지우기 (Clear)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase Compat Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+  <!-- Application Logic -->
+  <script src="main.js"></script>
+</body>
+
+</html>
