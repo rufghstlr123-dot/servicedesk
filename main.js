@@ -1033,7 +1033,7 @@ function setupEventListeners() {
         if (!pickerYearGrid || !pickerMonthGrid) return;
         
         if (pickerStep === 'year') {
-            pickerTitle.textContent = 'Year';
+            pickerTitle.textContent = '날짜 선택';
             pickerYearGrid.style.display = 'grid';
             pickerMonthGrid.style.display = 'none';
             
