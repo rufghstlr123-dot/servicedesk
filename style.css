@@ -876,6 +876,14 @@ body {
   border-color: var(--pr-color);
 }
 
+.picker-item.secondary {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  background: #f8fafc;
+  color: var(--text-muted);
+  border-style: dashed;
+}
+
 .close-btn:hover {
   color: var(--text-main);
 }
