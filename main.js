@@ -1019,49 +1019,40 @@ function setupEventListeners() {
         };
     }
 
-    // --- Month Picker Listeners ---
+    // --- Month Picker Logic ---
     const monthPickerModal = document.getElementById('month-picker-modal');
-    const closePickerBtn = document.getElementById('close-picker-btn');
-    const applyPickerBtn = document.getElementById('apply-picker-btn');
     const yearGrid = document.getElementById('picker-year-grid');
     const monthGrid = document.getElementById('picker-month-grid');
 
     let selectedYear = currentDate.getFullYear();
     let selectedMonth = currentDate.getMonth();
 
-    currentMonthDisplay.onclick = () => {
-        selectedYear = currentDate.getFullYear();
-        selectedMonth = currentDate.getMonth();
-        renderPickerGrids();
-        monthPickerModal.classList.remove('hidden');
-    };
-
-    closePickerBtn.onclick = () => monthPickerModal.classList.add('hidden');
-    window.addEventListener('click', (e) => {
-        if (e.target === monthPickerModal) monthPickerModal.classList.add('hidden');
-    });
-
     function renderPickerGrids() {
-        // Years (Current year - 2 to + 2)
+        if (!yearGrid || !monthGrid) return;
+        
+        // Year selection (expanded range: current year - 5 to + 5)
         yearGrid.innerHTML = '';
-        for (let y = currentDate.getFullYear() - 2; y <= currentDate.getFullYear() + 2; y++) {
+        const currentYear = new Date().getFullYear();
+        for (let y = currentYear - 5; y <= currentYear + 5; y++) {
             const btn = document.createElement('div');
             btn.className = `picker-item ${y === selectedYear ? 'active' : ''}`;
             btn.textContent = `${y}년`;
-            btn.onclick = () => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
                 selectedYear = y;
                 renderPickerGrids();
             };
             yearGrid.appendChild(btn);
         }
 
-        // Months 1-12
+        // Month selection (1-12)
         monthGrid.innerHTML = '';
         for (let m = 0; m < 12; m++) {
             const btn = document.createElement('div');
             btn.className = `picker-item ${m === selectedMonth ? 'active' : ''}`;
             btn.textContent = `${m + 1}월`;
-            btn.onclick = () => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
                 selectedMonth = m;
                 renderPickerGrids();
             };
@@ -1069,11 +1060,32 @@ function setupEventListeners() {
         }
     }
 
-    applyPickerBtn.onclick = () => {
-        currentDate = new Date(selectedYear, selectedMonth, 1);
-        listenToEmployees();
-        monthPickerModal.classList.add('hidden');
-    };
+    if (currentMonthDisplay) {
+        currentMonthDisplay.addEventListener('click', () => {
+            selectedYear = currentDate.getFullYear();
+            selectedMonth = currentDate.getMonth();
+            renderPickerGrids();
+            monthPickerModal.classList.remove('hidden');
+        });
+    }
+
+    const closePickerBtn = document.getElementById('close-picker-btn');
+    if (closePickerBtn) {
+        closePickerBtn.onclick = () => monthPickerModal.classList.add('hidden');
+    }
+
+    const applyPickerBtn = document.getElementById('apply-picker-btn');
+    if (applyPickerBtn) {
+        applyPickerBtn.onclick = () => {
+            currentDate = new Date(selectedYear, selectedMonth, 1);
+            listenToEmployees();
+            monthPickerModal.classList.add('hidden');
+        };
+    }
+
+    window.addEventListener('click', (e) => {
+        if (e.target === monthPickerModal) monthPickerModal.classList.add('hidden');
+    });
 }
 
 window.deleteEmployee = deleteEmployee;
