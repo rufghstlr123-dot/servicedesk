@@ -1033,7 +1033,7 @@ function setupEventListeners() {
         if (!pickerYearGrid || !pickerMonthGrid) return;
         
         if (pickerStep === 'year') {
-            pickerTitle.textContent = '연도 선택';
+            pickerTitle.textContent = 'Year';
             pickerYearGrid.style.display = 'grid';
             pickerMonthGrid.style.display = 'none';
             
@@ -1042,7 +1042,7 @@ function setupEventListeners() {
             for (let y = currentYear - 5; y <= currentYear + 5; y++) {
                 const btn = document.createElement('div');
                 btn.className = `picker-item ${y === selectedYear ? 'active' : ''}`;
-                btn.textContent = `${y}년`;
+                btn.textContent = y; // Only Number
                 btn.onclick = (e) => {
                     e.stopPropagation();
                     selectedYear = y;
@@ -1052,7 +1052,7 @@ function setupEventListeners() {
                 pickerYearGrid.appendChild(btn);
             }
         } else {
-            pickerTitle.textContent = `${selectedYear}년 - 월 선택`;
+            pickerTitle.textContent = selectedYear; // Show only the selected year
             pickerYearGrid.style.display = 'none';
             pickerMonthGrid.style.display = 'grid';
             
@@ -1060,11 +1060,10 @@ function setupEventListeners() {
             for (let m = 0; m < 12; m++) {
                 const btn = document.createElement('div');
                 btn.className = `picker-item ${m === selectedMonth ? 'active' : ''}`;
-                btn.textContent = `${m + 1}월`;
+                btn.textContent = m + 1; // Only Number
                 btn.onclick = (e) => {
                     e.stopPropagation();
                     selectedMonth = m;
-                    // Apply immediately
                     currentDate = new Date(selectedYear, selectedMonth, 1);
                     listenToEmployees();
                     monthPickerModal.classList.add('hidden');
@@ -1072,11 +1071,11 @@ function setupEventListeners() {
                 pickerMonthGrid.appendChild(btn);
             }
 
-            // Add a "Back" button to Go to Year selection
+            // Simple back button
             const backBtn = document.createElement('div');
             backBtn.className = 'picker-item secondary';
             backBtn.style.gridColumn = 'span 4';
-            backBtn.textContent = '← 연도 다시 선택';
+            backBtn.textContent = 'BACK';
             backBtn.onclick = (e) => {
                 e.stopPropagation();
                 pickerStep = 'year';
