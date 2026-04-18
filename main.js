@@ -281,8 +281,13 @@ function saveEmployeeToFirebase(name, category) {
 function deleteEmployee(empId) {
     if (!hasPermission('delete_employee')) return;
     if (confirm("정말 이 직원을 삭제하시겠습니까?")) {
-        const key = getMonthKey().val;
-        db.ref(`employees/${key}/${empId}`).remove();
+        const keys = getMonthKey();
+        
+        // Try deleting from both potential keys to be sure
+        db.ref(`employees/${keys.val}/${empId}`).remove();
+        db.ref(`employees/${keys.alt}/${empId}`).remove();
+
+        // Also clean up their schedule data
         Object.keys(scheduleData).forEach(key => {
             if (key.endsWith('_' + empId)) {
                 db.ref('schedule/' + key).remove();
