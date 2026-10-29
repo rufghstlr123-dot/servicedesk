@@ -32,9 +32,9 @@ const MAX_UNDO_STACK = 50;
 
 // Limits
 const CATEGORY_LIMITS = {
-    "Manager": 2,
-    "Weekday AR": 4,
-    "Weekend AR": 7
+    "Manager": 4,
+    "Weekday AR": 6,
+    "Weekend AR": 9
 };
 
 const CATEGORY_LABELS = {
