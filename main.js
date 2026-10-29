@@ -673,6 +673,7 @@ function renderRoster() {
                         if (cleanShiftVal === '연차' || cleanShiftVal === '대휴' || cleanShiftVal === '공휴') {
                             const chk = document.createElement('div');
                             chk.className = 'leave-checkbox-ui';
+                            chk.contentEditable = "false";
                             if (checkedData[cellKey]) chk.classList.add('is-checked');
                             chk.innerHTML = checkedData[cellKey] ? 'M' : '';
 
@@ -701,6 +702,17 @@ function renderRoster() {
                         }
                     };
                     cell.contentEditable = hasPermission('edit_shift', empId) ? "true" : "false";
+                    cell.onfocus = () => {
+                        if (cell.classList.contains('is-navigating') && cell.firstChild && cell.firstChild.nodeType === Node.TEXT_NODE) {
+                            const sel = window.getSelection();
+                            if (sel) {
+                                const range = document.createRange();
+                                range.selectNodeContents(cell.firstChild);
+                                sel.removeAllRanges();
+                                sel.addRange(range);
+                            }
+                        }
+                    };
                     cell.onblur = () => {
                         // Strip '✓' and 'M' from innerText so it isn't accidentally saved alongside the text
                         const newValue = cell.innerText.replace(/[✓M]/g, '').trim();
@@ -718,17 +730,6 @@ function renderRoster() {
                         if (e.key === 'Escape') { cell.textContent = scheduleData[cellKey] || ""; cell.blur(); return; }
                         if ((e.key.length === 1 || e.key === 'Process' || e.isComposing) && !e.ctrlKey && !e.metaKey && !e.altKey && cell.classList.contains('is-navigating')) {
                             cell.classList.remove('is-navigating');
-                            if (cell.childNodes.length > 0) {
-                                cell.textContent = "";
-                                const sel = window.getSelection();
-                                if (sel) {
-                                    const range = document.createRange();
-                                    range.selectNodeContents(cell);
-                                    range.collapse(true);
-                                    sel.removeAllRanges();
-                                    sel.addRange(range);
-                                }
-                            }
                         }
                     };
                     rosterGrid.appendChild(cell);
@@ -750,6 +751,7 @@ function renderRoster() {
             const targetCell = rosterGrid.querySelector('.r-entry.active-cell');
             if (targetCell && document.activeElement !== targetCell) {
                 targetCell.focus({ preventScroll: true });
+                targetCell.scrollIntoView({ block: 'nearest', inline: 'nearest' });
             }
         }
     }
@@ -790,15 +792,6 @@ function moveSelection(dRow, dCol, shift = false, ctrl = false) {
             pivotKey = nextKey;
         }
         renderRoster();
-
-        // Pre-emptive focus for IME support
-        setTimeout(() => {
-            const activeEl = document.querySelector('.active-cell');
-            if (activeEl) {
-                activeEl.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-                activeEl.focus();
-            }
-        }, 0);
     }
 }
 

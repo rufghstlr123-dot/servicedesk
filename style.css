@@ -524,6 +524,16 @@ body {
   caret-color: transparent;
 }
 
+.is-navigating::selection,
+.is-navigating *::selection {
+  background: transparent;
+  color: inherit;
+}
+
+.r-entry:not(.is-navigating) .leave-checkbox-ui {
+  display: none;
+}
+
 /* Header Row (Dates) */
 .r-header {
   position: sticky;
