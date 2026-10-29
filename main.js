@@ -410,6 +410,10 @@ function handleMouseDown(e, key) {
         return;
     }
 
+    if (document.activeElement && ['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+        document.activeElement.blur();
+    }
+
     if (e.ctrlKey || e.metaKey) {
         if (selectedKeys.has(key)) selectedKeys.delete(key);
         else selectedKeys.add(key);
@@ -685,14 +689,16 @@ function renderRoster() {
                     }
 
                     cell.onmousedown = (e) => {
-                        if (document.activeElement === cell) return;
-                        if (selectedKeys.size === 1 && selectedKeys.has(cellKey)) return;
+                        if (document.activeElement === cell && !cell.classList.contains('is-navigating')) return;
                         e.preventDefault();
                         handleMouseDown(e, cellKey);
                     };
                     cell.onmouseover = (e) => handleMouseOver(e, cellKey);
                     cell.ondblclick = () => {
-                        if (hasPermission('edit_shift', empId)) cell.focus();
+                        if (hasPermission('edit_shift', empId)) {
+                            cell.classList.remove('is-navigating');
+                            cell.focus();
+                        }
                     };
                     cell.contentEditable = hasPermission('edit_shift', empId) ? "true" : "false";
                     cell.onblur = () => {
@@ -706,12 +712,23 @@ function renderRoster() {
                         if (e.key === 'Enter') {
                             if (e.altKey) { e.preventDefault(); document.execCommand('insertLineBreak'); return; }
                             e.preventDefault(); cell.blur(); moveSelection(1, 0);
+                            return;
                         }
-                        if (e.key === 'Tab') { e.preventDefault(); cell.blur(); moveSelection(0, e.shiftKey ? -1 : 1); }
-                        if (e.key === 'Escape') { cell.textContent = scheduleData[cellKey] || ""; cell.blur(); }
-                        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && cell.classList.contains('is-navigating')) {
+                        if (e.key === 'Tab') { e.preventDefault(); cell.blur(); moveSelection(0, e.shiftKey ? -1 : 1); return; }
+                        if (e.key === 'Escape') { cell.textContent = scheduleData[cellKey] || ""; cell.blur(); return; }
+                        if ((e.key.length === 1 || e.key === 'Process' || e.isComposing) && !e.ctrlKey && !e.metaKey && !e.altKey && cell.classList.contains('is-navigating')) {
                             cell.classList.remove('is-navigating');
-                            cell.innerText = "";
+                            if (cell.childNodes.length > 0) {
+                                cell.textContent = "";
+                                const sel = window.getSelection();
+                                if (sel) {
+                                    const range = document.createRange();
+                                    range.selectNodeContents(cell);
+                                    range.collapse(true);
+                                    sel.removeAllRanges();
+                                    sel.addRange(range);
+                                }
+                            }
                         }
                     };
                     rosterGrid.appendChild(cell);
@@ -722,6 +739,20 @@ function renderRoster() {
             }
         });
     });
+
+    // Ensure active cell keeps focus for immediate Korean IME input
+    if (activeKey) {
+        const activeEl = document.activeElement;
+        const activeTag = activeEl ? activeEl.tagName : '';
+        const isOtherInput = ['INPUT', 'SELECT', 'TEXTAREA'].includes(activeTag) ||
+            (activeEl && activeEl.classList && activeEl.classList.contains('holiday-cell'));
+        if (!isOtherInput) {
+            const targetCell = rosterGrid.querySelector('.r-entry.active-cell');
+            if (targetCell && document.activeElement !== targetCell) {
+                targetCell.focus({ preventScroll: true });
+            }
+        }
+    }
 }
 
 // --- Excel Navigation Logic ---
