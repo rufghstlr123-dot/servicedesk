@@ -530,7 +530,7 @@ body {
   color: inherit;
 }
 
-.r-entry:not(.is-navigating) .leave-checkbox-ui {
+.r-entry.active-cell:not(.is-navigating) .leave-checkbox-ui {
   display: none;
 }
 
