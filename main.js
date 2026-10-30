@@ -371,6 +371,15 @@ const HOLIDAYS_VAR_2026 = {
     "2026-09-26": "추석 연휴", "2026-10-05": "대체공휴일",
 };
 
+const HOLIDAYS_VAR_2027 = {
+    "2027-02-06": "설날 연휴", "2027-02-07": "설날", "2027-02-08": "설날 연휴",
+    "2027-02-09": "대체공휴일", "2027-05-01": "노동절", "2027-05-03": "대체공휴일",
+    "2027-05-13": "부처님오신날", "2027-07-17": "제헌절", "2027-07-19": "대체공휴일",
+    "2027-08-16": "대체공휴일", "2027-09-14": "추석 연휴", "2027-09-15": "추석",
+    "2027-09-16": "추석 연휴", "2027-10-04": "대체공휴일", "2027-10-11": "대체공휴일",
+    "2027-12-27": "대체공휴일",
+};
+
 function getHolidayName(year, month, day) {
     const mmdd = String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
     const yyyymmdd = year + '-' + mmdd;
@@ -379,6 +388,7 @@ function getHolidayName(year, month, day) {
     if (customHolidaysData[yyyymmdd]) return customHolidaysData[yyyymmdd];
 
     if (year === 2026 && HOLIDAYS_VAR_2026[yyyymmdd]) return HOLIDAYS_VAR_2026[yyyymmdd];
+    if (year === 2027 && HOLIDAYS_VAR_2027[yyyymmdd]) return HOLIDAYS_VAR_2027[yyyymmdd];
     if (PUBLIC_HOLIDAYS_FIXED[mmdd]) return PUBLIC_HOLIDAYS_FIXED[mmdd];
     return null;
 }
