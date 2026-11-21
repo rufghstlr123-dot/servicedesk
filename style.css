@@ -689,6 +689,18 @@ body {
   color: white;
 }
 
+.auto-schedule-btn.is-disabled {
+  background: #e2e8f0;
+  color: #94a3b8;
+  border-color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.auto-schedule-btn.is-disabled:hover {
+  background: #e2e8f0;
+  color: #94a3b8;
+}
+
 .cat-Manager {
   border-left: 4px solid var(--cat-manager);
 }

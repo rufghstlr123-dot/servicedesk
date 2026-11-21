@@ -611,12 +611,20 @@ function renderRoster() {
         catHeaderDiv.appendChild(catTitleSpan);
 
         if ((cat === 'Weekday AR' || cat === 'Weekend AR') && hasPermission('auto_schedule')) {
+            const isAlreadyScheduled = hasExistingScheduleForCategory(cat);
             const autoBtn = document.createElement('button');
-            autoBtn.className = 'auto-schedule-btn';
+            autoBtn.className = `auto-schedule-btn${isAlreadyScheduled ? ' is-disabled' : ''}`;
             autoBtn.textContent = '자동 편성';
+            if (isAlreadyScheduled) {
+                autoBtn.title = '이미 편성된 근무가 있어 사용할 수 없습니다.';
+            }
             autoBtn.onmousedown = (e) => e.stopPropagation();
             autoBtn.onclick = (e) => {
                 e.stopPropagation();
+                if (hasExistingScheduleForCategory(cat)) {
+                    alert(`이미 ${CATEGORY_LABELS[cat]}에 편성된 근무가 있습니다.`);
+                    return;
+                }
                 openAutoScheduleModal(cat);
             };
             catHeaderDiv.appendChild(autoBtn);
@@ -1201,6 +1209,28 @@ function setupEventListeners() {
 // --- Auto Schedule Logic ---
 let autoScheduleTargetCategory = null;
 
+function hasExistingScheduleForCategory(category) {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const catEmpIds = Object.entries(employeesData)
+        .filter(([, emp]) => emp.category === category)
+        .map(([empId]) => empId);
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        for (const empId of catEmpIds) {
+            const rawVal = scheduleData[`${dateStr}_${empId}`];
+            const cleanVal = rawVal ? rawVal.toString().replace(/[✓M]/g, '').trim() : '';
+            if (cleanVal !== '') {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 function shuffleArray(arr) {
     const copy = [...arr];
     for (let i = copy.length - 1; i > 0; i--) {
@@ -1212,6 +1242,10 @@ function shuffleArray(arr) {
 
 function openAutoScheduleModal(category) {
     if (!hasPermission('auto_schedule')) return;
+    if (hasExistingScheduleForCategory(category)) {
+        alert(`이미 ${CATEGORY_LABELS[category]}에 편성된 근무가 있습니다.`);
+        return;
+    }
     autoScheduleTargetCategory = category;
 
     const modal = document.getElementById('auto-schedule-modal');
@@ -1226,7 +1260,7 @@ function openAutoScheduleModal(category) {
     const daysDesc = category === 'Weekday AR' ? '월~금요일' : '토~일요일';
 
     if (titleEl) titleEl.textContent = `${label} 근무 자동 편성`;
-    if (subtitleEl) subtitleEl.textContent = `${daysDesc} 빈 칸에 ${label} 인원(현재 ${catEmps.length}명)을 A조/B조로 균등 배정합니다.`;
+    if (subtitleEl) subtitleEl.textContent = `${daysDesc}에 ${label} 인원(현재 ${catEmps.length}명)을 A조/B조로 균등 배정합니다.`;
     if (errorEl) errorEl.textContent = '';
     if (countAInput) countAInput.value = '';
     if (countBInput) countBInput.value = '';
@@ -1248,6 +1282,11 @@ function executeAutoSchedule() {
     const countBInput = document.getElementById('auto-count-b');
     const errorEl = document.getElementById('auto-schedule-error');
     const modal = document.getElementById('auto-schedule-modal');
+
+    if (hasExistingScheduleForCategory(category)) {
+        if (errorEl) errorEl.textContent = `이미 ${label}에 편성된 근무가 있어 자동 편성을 실행할 수 없습니다.`;
+        return;
+    }
 
     const rawA = countAInput ? countAInput.value.trim() : '';
     const rawB = countBInput ? countBInput.value.trim() : '';
