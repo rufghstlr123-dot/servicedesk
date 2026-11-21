@@ -169,6 +169,29 @@
     </div>
   </div>
 
+  <!-- Auto Schedule Modal -->
+  <div id="auto-schedule-modal" class="modal-backdrop hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="auto-schedule-title">근무 자동 편성</h3>
+        <button id="close-auto-schedule-btn" class="close-btn" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="auto-schedule-subtitle" class="modal-subtitle"></p>
+        <div class="form-group">
+          <label for="auto-count-a">일별 A조 인원 수</label>
+          <input type="number" id="auto-count-a" min="0" max="20" placeholder="A조 인원 수를 입력하세요">
+        </div>
+        <div class="form-group">
+          <label for="auto-count-b">일별 B조 인원 수</label>
+          <input type="number" id="auto-count-b" min="0" max="20" placeholder="B조 인원 수를 입력하세요">
+        </div>
+        <div id="auto-schedule-error" class="error-msg"></div>
+        <button id="confirm-auto-schedule-btn" class="primary-btn full-width">자동 편성하기</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase Compat Scripts -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>

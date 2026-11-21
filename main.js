@@ -149,7 +149,7 @@ function hasPermission(action, targetEmpId = null) {
     }
 
     // Guest cannot do these actions
-    if (['add_employee', 'delete_employee', 'edit_holiday', 'reorder_employee', 'edit_checkbox', 'edit_memo'].includes(action)) {
+    if (['add_employee', 'delete_employee', 'edit_holiday', 'reorder_employee', 'edit_checkbox', 'edit_memo', 'auto_schedule'].includes(action)) {
         return false;
     }
 
@@ -605,7 +605,23 @@ function renderRoster() {
             .sort((a, b) => (a[1].sortOrder || 0) - (b[1].sortOrder || 0));
         const catHeaderDiv = document.createElement('div');
         catHeaderDiv.className = `cat-row cat-${cat.split(' ')[0]}`;
-        catHeaderDiv.textContent = CATEGORY_LABELS[cat];
+
+        const catTitleSpan = document.createElement('span');
+        catTitleSpan.textContent = CATEGORY_LABELS[cat];
+        catHeaderDiv.appendChild(catTitleSpan);
+
+        if ((cat === 'Weekday AR' || cat === 'Weekend AR') && hasPermission('auto_schedule')) {
+            const autoBtn = document.createElement('button');
+            autoBtn.className = 'auto-schedule-btn';
+            autoBtn.textContent = '자동 편성';
+            autoBtn.onmousedown = (e) => e.stopPropagation();
+            autoBtn.onclick = (e) => {
+                e.stopPropagation();
+                openAutoScheduleModal(cat);
+            };
+            catHeaderDiv.appendChild(autoBtn);
+        }
+
         rosterGrid.appendChild(catHeaderDiv);
 
         catEmployees.forEach(([empId, emp]) => {
@@ -1138,9 +1154,233 @@ function setupEventListeners() {
     const applyPickerBtn = document.getElementById('apply-picker-btn');
     if (applyPickerBtn) applyPickerBtn.style.display = 'none';
 
+    // --- Auto Schedule Modal Listeners ---
+    const autoScheduleModal = document.getElementById('auto-schedule-modal');
+    const closeAutoScheduleBtn = document.getElementById('close-auto-schedule-btn');
+    const confirmAutoScheduleBtn = document.getElementById('confirm-auto-schedule-btn');
+    const autoCountAInput = document.getElementById('auto-count-a');
+    const autoCountBInput = document.getElementById('auto-count-b');
+
+    if (closeAutoScheduleBtn && autoScheduleModal) {
+        closeAutoScheduleBtn.onclick = () => autoScheduleModal.classList.add('hidden');
+    }
+    if (confirmAutoScheduleBtn) {
+        confirmAutoScheduleBtn.onclick = executeAutoSchedule;
+    }
+    if (autoCountAInput) {
+        autoCountAInput.onkeydown = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (autoCountBInput && autoCountBInput.value.trim() === '') {
+                    autoCountBInput.focus();
+                } else {
+                    executeAutoSchedule();
+                }
+            } else if (e.key === 'Escape' && autoScheduleModal) {
+                autoScheduleModal.classList.add('hidden');
+            }
+        };
+    }
+    if (autoCountBInput) {
+        autoCountBInput.onkeydown = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                executeAutoSchedule();
+            } else if (e.key === 'Escape' && autoScheduleModal) {
+                autoScheduleModal.classList.add('hidden');
+            }
+        };
+    }
+
     window.addEventListener('click', (e) => {
         if (e.target === monthPickerModal) monthPickerModal.classList.add('hidden');
+        if (autoScheduleModal && e.target === autoScheduleModal) autoScheduleModal.classList.add('hidden');
     });
+}
+
+// --- Auto Schedule Logic ---
+let autoScheduleTargetCategory = null;
+
+function shuffleArray(arr) {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+}
+
+function openAutoScheduleModal(category) {
+    if (!hasPermission('auto_schedule')) return;
+    autoScheduleTargetCategory = category;
+
+    const modal = document.getElementById('auto-schedule-modal');
+    const titleEl = document.getElementById('auto-schedule-title');
+    const subtitleEl = document.getElementById('auto-schedule-subtitle');
+    const countAInput = document.getElementById('auto-count-a');
+    const countBInput = document.getElementById('auto-count-b');
+    const errorEl = document.getElementById('auto-schedule-error');
+
+    const catEmps = Object.entries(employeesData).filter(([, emp]) => emp.category === category);
+    const label = CATEGORY_LABELS[category] || category;
+    const daysDesc = category === 'Weekday AR' ? '월~금요일' : '토~일요일';
+
+    if (titleEl) titleEl.textContent = `${label} 근무 자동 편성`;
+    if (subtitleEl) subtitleEl.textContent = `${daysDesc} 빈 칸에 ${label} 인원(현재 ${catEmps.length}명)을 A조/B조로 균등 배정합니다.`;
+    if (errorEl) errorEl.textContent = '';
+    if (countAInput) countAInput.value = '';
+    if (countBInput) countBInput.value = '';
+
+    if (modal) {
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            if (countAInput) countAInput.focus();
+        }, 50);
+    }
+}
+
+function executeAutoSchedule() {
+    if (!hasPermission('auto_schedule') || !autoScheduleTargetCategory) return;
+
+    const category = autoScheduleTargetCategory;
+    const label = CATEGORY_LABELS[category] || category;
+    const countAInput = document.getElementById('auto-count-a');
+    const countBInput = document.getElementById('auto-count-b');
+    const errorEl = document.getElementById('auto-schedule-error');
+    const modal = document.getElementById('auto-schedule-modal');
+
+    const rawA = countAInput ? countAInput.value.trim() : '';
+    const rawB = countBInput ? countBInput.value.trim() : '';
+
+    if (rawA === '' || rawB === '') {
+        if (errorEl) errorEl.textContent = '일별 A조와 B조 인원 수를 모두 입력해주세요.';
+        return;
+    }
+
+    const targetA = parseInt(rawA, 10);
+    const targetB = parseInt(rawB, 10);
+
+    if (isNaN(targetA) || isNaN(targetB) || targetA < 0 || targetB < 0) {
+        if (errorEl) errorEl.textContent = '0 이상의 올바른 숫자를 입력해주세요.';
+        return;
+    }
+
+    if (targetA + targetB === 0) {
+        if (errorEl) errorEl.textContent = 'A조 또는 B조 인원 수를 1명 이상 입력해주세요.';
+        return;
+    }
+
+    const catEmps = Object.entries(employeesData)
+        .filter(([, emp]) => emp.category === category)
+        .sort((a, b) => (a[1].sortOrder || 0) - (b[1].sortOrder || 0))
+        .map(([empId]) => empId);
+
+    if (catEmps.length === 0) {
+        if (errorEl) errorEl.textContent = `현재 달에 등록된 ${label} 직원이 없습니다.`;
+        return;
+    }
+
+    if (targetA + targetB > catEmps.length) {
+        if (errorEl) errorEl.textContent = `입력한 일별 인원 합계(${targetA + targetB}명)가 등록된 ${label} 직원 수(${catEmps.length}명)보다 많습니다.`;
+        return;
+    }
+
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // Track monthly A/B counts per employee for balanced distribution
+    const stats = {};
+    catEmps.forEach(empId => {
+        stats[empId] = { A: 0, B: 0, total: 0 };
+    });
+
+    // Include already assigned A/B shifts in this month into initial stats
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        catEmps.forEach(empId => {
+            const rawVal = scheduleData[`${dateStr}_${empId}`];
+            const cleanVal = rawVal ? rawVal.toString().replace(/[✓M]/g, '').trim() : '';
+            if (cleanVal === 'A' || cleanVal === 'A(연)') {
+                stats[empId].A++;
+                stats[empId].total++;
+            } else if (cleanVal === 'B') {
+                stats[empId].B++;
+                stats[empId].total++;
+            }
+        });
+    }
+
+    const updates = {};
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dayOfWeek = new Date(year, month, day).getDay();
+        const isTargetDay = category === 'Weekday AR'
+            ? (dayOfWeek >= 1 && dayOfWeek <= 5)
+            : (dayOfWeek === 0 || dayOfWeek === 6);
+
+        if (!isTargetDay) continue;
+
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+        let existingA = 0;
+        let existingB = 0;
+        const availableEmps = [];
+
+        catEmps.forEach(empId => {
+            const rawVal = scheduleData[`${dateStr}_${empId}`];
+            const cleanVal = rawVal ? rawVal.toString().replace(/[✓M]/g, '').trim() : '';
+
+            if (!cleanVal) {
+                availableEmps.push(empId);
+            } else if (cleanVal === 'A' || cleanVal === 'A(연)') {
+                existingA++;
+            } else if (cleanVal === 'B') {
+                existingB++;
+            }
+        });
+
+        const needA = Math.max(0, targetA - existingA);
+        const needB = Math.max(0, targetB - existingB);
+        const totalNeed = needA + needB;
+
+        if (totalNeed === 0 || availableEmps.length === 0) continue;
+
+        // 1. Pick employees with lowest total shifts so far (random tie-breaking)
+        const candidates = shuffleArray(availableEmps).sort((e1, e2) => {
+            return stats[e1].total - stats[e2].total;
+        });
+
+        const selectedToday = candidates.slice(0, Math.min(candidates.length, totalNeed));
+
+        // 2. Balance A vs B among selected employees
+        const orderedForA = shuffleArray(selectedToday).sort((e1, e2) => {
+            const diff1 = stats[e1].A - stats[e1].B;
+            const diff2 = stats[e2].A - stats[e2].B;
+            if (diff1 !== diff2) return diff1 - diff2;
+            return stats[e1].A - stats[e2].A;
+        });
+
+        const assignACount = Math.min(orderedForA.length, needA);
+        for (let i = 0; i < assignACount; i++) {
+            const empId = orderedForA[i];
+            updates[`${dateStr}_${empId}`] = 'A';
+            stats[empId].A++;
+            stats[empId].total++;
+        }
+
+        const remainingForB = orderedForA.slice(assignACount);
+        const assignBCount = Math.min(remainingForB.length, needB);
+        for (let i = 0; i < assignBCount; i++) {
+            const empId = remainingForB[i];
+            updates[`${dateStr}_${empId}`] = 'B';
+            stats[empId].B++;
+            stats[empId].total++;
+        }
+    }
+
+    applyShiftChanges(updates, true);
+    if (modal) modal.classList.add('hidden');
 }
 
 window.deleteEmployee = deleteEmployee;
